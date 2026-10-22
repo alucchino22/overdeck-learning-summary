@@ -2733,6 +2733,9 @@ function submitOther() {
 </div>
 
 <script>
+// ── Supabase credentials ──────────────────────────────────────────────────
+var SUPABASE_URL = 'https://ppemvydlcfbnunnydqef.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwZW12eWRsY2ZibnVubnlkcWVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MjUzMTQsImV4cCI6MjEwMDQwMTMxNH0.LHXw5KJfSDX-bQxmJy5WK3VLsKIg_lWyYkldvLXSviw';
 
 // ── Breadcrumb updates ────────────────────────────────────────────────────
 var PORT_META = {
@@ -2955,9 +2958,7 @@ function restorePollState() {
   }).catch(function() {});
 }
 
-// ── Supabase client ───────────────────────────────────────────────────────
-var SUPABASE_URL = 'https://ppemvydlcfbnunnydqef.supabase.co';
-var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwZW12eWRsY2ZibnVubnlkcWVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MjUzMTQsImV4cCI6MjEwMDQwMTMxNH0.LHXw5KJfSDX-bQxmJy5WK3VLsKIg_lWyYkldvLXSviw';
+// Supabase credentials moved to top of script block
 
 function sbInsert(table, payload) {
   console.log('sbInsert:', table, payload);
