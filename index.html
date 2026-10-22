@@ -2816,6 +2816,7 @@ var SUPABASE_URL = 'https://ppemvydlcfbnunnydqef.supabase.co';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwZW12eWRsY2ZibnVubnlkcWVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MjUzMTQsImV4cCI6MjEwMDQwMTMxNH0.LHXw5KJfSDX-bQxmJy5WK3VLsKIg_lWyYkldvLXSviw';
 
 function sbInsert(table, payload) {
+  console.log('sbInsert:', table, payload);
   fetch(SUPABASE_URL + '/rest/v1/' + table, {
     method: 'POST',
     headers: {
@@ -2825,7 +2826,13 @@ function sbInsert(table, payload) {
       'Prefer': 'return=minimal'
     },
     body: JSON.stringify(payload)
-  }).catch(function(e) { console.warn('Supabase write failed:', e); });
+  }).then(function(r) {
+    if (!r.ok) {
+      r.text().then(function(t) { console.error('Supabase error ' + r.status + ':', t); });
+    } else {
+      console.log('Supabase insert OK:', table);
+    }
+  }).catch(function(e) { console.error('Supabase fetch failed:', e); });
 }
 
 // ── Q1 Other open response ─────────────────────────────────────────────────
@@ -2859,11 +2866,10 @@ function toggleReact(btn) {
   siblings.forEach(b => b.classList.remove('active'));
   if (!isActive) {
     btn.classList.add('active');
-    // Write to Supabase — get card id from nearest ins-tag
     var card = btn.closest('.ins-card');
-    var tag = card ? (card.querySelector('.ins-tag') || card.querySelector('.ins-hl')) : null;
-    var cardId = tag ? tag.textContent.trim().substring(0, 80) : 'unknown';
-    var reaction = btn.textContent.includes('Agree') ? 'agree' : 'disagree';
+    var hl = card ? card.querySelector('.ins-hl') : null;
+    var cardId = hl ? hl.textContent.trim().substring(0, 120) : 'unknown';
+    var reaction = btn.textContent.trim().startsWith('👍') ? 'agree' : 'disagree';
     sbInsert('card_reactions', { card_id: cardId, reaction: reaction });
   }
 }
@@ -2878,8 +2884,8 @@ document.addEventListener('click', function(e) {
   var ta = cmt ? cmt.querySelector('.cmt-ta') : null;
   if (!ta || !ta.value.trim()) return;
   var card = e.target.closest('.ins-card');
-  var tag = card ? (card.querySelector('.ins-tag') || card.querySelector('.ins-hl')) : null;
-  var cardId = tag ? tag.textContent.trim().substring(0, 80) : 'unknown';
+  var hl = card ? card.querySelector('.ins-hl') : null;
+  var cardId = hl ? hl.textContent.trim().substring(0, 120) : 'unknown';
   sbInsert('card_comments', { card_id: cardId, comment: ta.value.trim() });
   ta.value = '';
   ta.placeholder = 'Comment submitted — thank you!';
