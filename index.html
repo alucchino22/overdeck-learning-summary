@@ -2708,7 +2708,7 @@ function submitOther() {
     <div class="modal-head">
       <div>
         <div class="modal-title">Ask the evidence register</div>
-        <div class="modal-sub">Opens the OFF Learning Agent with your question pre-filled</div>
+        <div class="modal-sub">Powered by the OFF Insights Register · 400+ evidence rows across all learning questions</div>
       </div>
       <span class="modal-close" onclick="closeModal()">×</span>
     </div>
@@ -3141,8 +3141,8 @@ document.addEventListener('keydown', function(e) {
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openModal(); }
 });
 function fillAndAsk(q) {
-  window.open(AGENT_URL + '?q=' + encodeURIComponent(q), '_blank');
-  closeModal();
+  document.getElementById('modal-input').value = q;
+  runModalQuery();
 }
 
 // ── Evidence register query context ──────────────────────────────────────
@@ -3171,13 +3171,36 @@ Include 2-4 bullets. If the question cannot be answered from the register, retur
 
 var AGENT_URL = 'https://chatgpt.com/agents/a/agt_6a51041111388191a90960922bd1ed61';
 
+var PROXY_URL = 'https://off-query-proxy-amzjpk9xg-overdeck-family-foundation.vercel.app/api/query';
+
 function runModalQuery() {
   var input = document.getElementById('modal-input');
+  var resultDiv = document.getElementById('modal-result');
+  var btn = document.getElementById('modal-btn');
   var q = input.value.trim();
   if (!q) return;
-  // Open the Learning Agent with the query pre-filled
-  window.open(AGENT_URL + '?q=' + encodeURIComponent(q), '_blank');
-  closeModal();
+
+  btn.disabled = true; btn.textContent = 'Searching…';
+  resultDiv.innerHTML = '<div class="qr-loading"><div class="qr-spinner"></div>Searching the evidence register…</div>';
+
+  fetch(PROXY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: q })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    btn.disabled = false; btn.textContent = 'Ask →';
+    var text = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text : '';
+    var parsed;
+    try { var clean = text.replace(/```json|```/g,'').trim(); parsed = JSON.parse(clean); }
+    catch(e) { resultDiv.innerHTML = '<div style="padding:1rem;font-size:12px;color:#C2410C;">Could not parse response. Try rephrasing your question.</div>'; return; }
+    renderModalResult(q, parsed);
+  })
+  .catch(function() {
+    btn.disabled = false; btn.textContent = 'Ask →';
+    resultDiv.innerHTML = '<div style="padding:1rem;font-size:12px;color:#C2410C;">Request failed. Please try again.</div>';
+  });
 }
 
 function renderModalResult(q, d) {
