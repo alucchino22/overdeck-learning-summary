@@ -2921,42 +2921,54 @@ function vote(qid, el, base) {
 
 // Restore poll state from localStorage on load
 function restorePollState() {
-  // Load ALL poll votes at once, then split by question
   fetch(SUPABASE_URL + '/rest/v1/engagement_poll_votes?select=question_id,answer', {
     headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
   }).then(function(r) { return r.json(); })
   .then(function(rows) {
     if (!Array.isArray(rows)) return;
-    // Group by question_id
+    // Build counts per question per answer
     var byQ = {};
     rows.forEach(function(r) {
       if (!byQ[r.question_id]) byQ[r.question_id] = {};
-      byQ[r.question_id][r.answer] = (byQ[r.question_id][r.answer] || 0) + 1;
+      var ans = (r.answer || '').trim();
+      byQ[r.question_id][ans] = (byQ[r.question_id][ans] || 0) + 1;
     });
     ['q4','q5','q6','q7'].forEach(function(qid) {
       var container = document.getElementById(qid);
       if (!container) return;
-      var counts = byQ[qid] || {};
-      var total = Object.values(counts).reduce(function(a,b){return a+b;}, 0);
+      var qCounts = byQ[qid] || {};
+      var total = 0;
+      Object.keys(qCounts).forEach(function(k) { total += qCounts[k]; });
+      if (total === 0) return;
       var saved = '';
       try { saved = localStorage.getItem('voted_' + qid) || ''; } catch(e) {}
-      if (saved) { voted[qid] = true; }
-      var opts = container.querySelectorAll('.p-opt');
+      if (saved) voted[qid] = true;
+      var opts = Array.from(container.querySelectorAll('.p-opt')).filter(function(o) {
+        return !o.id || o.id !== qid + '-other-opt';
+      });
       opts.forEach(function(o) {
-        var text = getOptText(o);
-        var count = counts[text] || 0;
-        var pct = total > 0 ? Math.round(count / total * 100) : 0;
-        // Always show percentages if there are any votes
-        if (total > 0) {
-          o.querySelector('.p-bar').style.width = pct + '%';
-          o.querySelector('.p-pct').textContent = ' ' + pct + '%';
+        // Build answer text by stripping p-pct from a clone
+        var clone = o.querySelector('span') ? o.querySelector('span').cloneNode(true) : null;
+        if (clone) { var pct = clone.querySelector('.p-pct'); if (pct) pct.parentNode.removeChild(pct); }
+        var text = clone ? clone.textContent.trim() : '';
+        // Also try matching with the raw innerHTML text
+        var count = qCounts[text] || 0;
+        // If still 0, try a loose match
+        if (count === 0) {
+          Object.keys(qCounts).forEach(function(k) {
+            if (k.trim() === text || text.indexOf(k.trim()) === 0 || k.trim().indexOf(text) === 0) {
+              count = qCounts[k];
+            }
+          });
         }
-        // Lock cursor only if this user voted
+        var pctVal = Math.round(count / total * 100);
+        o.querySelector('.p-bar').style.width = pctVal + '%';
+        o.querySelector('.p-pct').textContent = ' ' + pctVal + '%';
         if (saved) o.style.cursor = 'default';
-        if (text === saved) o.classList.add('voted');
+        if (text === saved.trim()) o.classList.add('voted');
       });
     });
-  }).catch(function() {});
+  }).catch(function(e) { console.error('restorePollState error:', e); });
 }
 
 // Supabase credentials moved to top of script block
