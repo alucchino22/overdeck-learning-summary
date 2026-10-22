@@ -2934,7 +2934,6 @@ function restorePollState() {
       if (!container) return;
       var counts = byQ[qid] || {};
       var total = Object.values(counts).reduce(function(a,b){return a+b;}, 0);
-      if (total === 0) return;
       var saved = '';
       try { saved = localStorage.getItem('voted_' + qid) || ''; } catch(e) {}
       if (saved) { voted[qid] = true; }
@@ -2942,9 +2941,13 @@ function restorePollState() {
       opts.forEach(function(o) {
         var text = getOptText(o);
         var count = counts[text] || 0;
-        var pct = Math.round(count / total * 100);
-        o.querySelector('.p-bar').style.width = pct + '%';
-        o.querySelector('.p-pct').textContent = ' ' + pct + '%';
+        var pct = total > 0 ? Math.round(count / total * 100) : 0;
+        // Always show percentages if there are any votes
+        if (total > 0) {
+          o.querySelector('.p-bar').style.width = pct + '%';
+          o.querySelector('.p-pct').textContent = ' ' + pct + '%';
+        }
+        // Lock cursor only if this user voted
         if (saved) o.style.cursor = 'default';
         if (text === saved) o.classList.add('voted');
       });
