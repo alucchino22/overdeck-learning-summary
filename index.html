@@ -2925,14 +2925,15 @@ function restorePollState() {
     headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
   }).then(function(r) { return r.json(); })
   .then(function(rows) {
+    console.log('restorePollState rows:', rows);
     if (!Array.isArray(rows)) return;
-    // Build counts per question per answer
     var byQ = {};
     rows.forEach(function(r) {
       if (!byQ[r.question_id]) byQ[r.question_id] = {};
       var ans = (r.answer || '').trim();
       byQ[r.question_id][ans] = (byQ[r.question_id][ans] || 0) + 1;
     });
+    console.log('byQ:', JSON.stringify(byQ));
     ['q4','q5','q6','q7'].forEach(function(qid) {
       var container = document.getElementById(qid);
       if (!container) return;
@@ -2951,7 +2952,7 @@ function restorePollState() {
         var clone = o.querySelector('span') ? o.querySelector('span').cloneNode(true) : null;
         if (clone) { var pct = clone.querySelector('.p-pct'); if (pct) pct.parentNode.removeChild(pct); }
         var text = clone ? clone.textContent.trim() : '';
-        // Also try matching with the raw innerHTML text
+        console.log('opt text:', JSON.stringify(text), 'qCounts keys:', Object.keys(qCounts));
         var count = qCounts[text] || 0;
         // If still 0, try a loose match
         if (count === 0) {
@@ -3242,7 +3243,7 @@ window.addEventListener('load', () => {
   var portFirst = document.querySelector('#portfolio-filters-top .s-filter');
   if (portFirst) portFirst.click();
   loadReactionCounts();
-  restorePollState();
+  setTimeout(restorePollState, 500);
   loadComments();
 });
 </script>
