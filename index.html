@@ -2708,7 +2708,7 @@ function submitOther() {
     <div class="modal-head">
       <div>
         <div class="modal-title">Ask the evidence register</div>
-        <div class="modal-sub">Powered by the OFF Insights Register · 400+ evidence rows across all learning questions</div>
+        <div class="modal-sub">Opens the OFF Learning Agent with your question pre-filled</div>
       </div>
       <span class="modal-close" onclick="closeModal()">×</span>
     </div>
@@ -3141,8 +3141,8 @@ document.addEventListener('keydown', function(e) {
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openModal(); }
 });
 function fillAndAsk(q) {
-  document.getElementById('modal-input').value = q;
-  runModalQuery();
+  window.open(AGENT_URL + '?q=' + encodeURIComponent(q), '_blank');
+  closeModal();
 }
 
 // ── Evidence register query context ──────────────────────────────────────
@@ -3173,36 +3173,11 @@ var AGENT_URL = 'https://chatgpt.com/agents/a/agt_6a51041111388191a90960922bd1ed
 
 function runModalQuery() {
   var input = document.getElementById('modal-input');
-  var resultDiv = document.getElementById('modal-result');
-  var btn = document.getElementById('modal-btn');
   var q = input.value.trim();
   if (!q) return;
-
-  btn.disabled = true; btn.textContent = 'Searching…';
-  resultDiv.innerHTML = '<div class="qr-loading"><div class="qr-spinner"></div>Searching the evidence register…</div>';
-
-  fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6', max_tokens: 1000,
-      system: REGISTER_CONTEXT,
-      messages: [{ role: 'user', content: q }]
-    })
-  })
-  .then(r => r.json())
-  .then(data => {
-    btn.disabled = false; btn.textContent = 'Ask →';
-    var text = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text : '';
-    var parsed;
-    try { var clean = text.replace(/```json|```/g,'').trim(); parsed = JSON.parse(clean); }
-    catch(e) { resultDiv.innerHTML = '<div style="padding:1rem;font-size:12px;color:#C2410C;">Could not parse response. Try rephrasing your question.</div>'; return; }
-    renderModalResult(q, parsed);
-  })
-  .catch(() => {
-    btn.disabled = false; btn.textContent = 'Ask →';
-    resultDiv.innerHTML = '<div style="padding:1rem;font-size:12px;color:#C2410C;">Request failed. This feature requires a live deployment — CORS blocks local previews.</div>';
-  });
+  // Open the Learning Agent with the query pre-filled
+  window.open(AGENT_URL + '?q=' + encodeURIComponent(q), '_blank');
+  closeModal();
 }
 
 function renderModalResult(q, d) {
