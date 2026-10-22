@@ -2806,6 +2806,26 @@ function vote(qid, el, base) {
     o.style.cursor = 'default';
   });
   el.classList.add('voted');
+  // Write to Supabase
+  var answerText = el.querySelector('span') ? el.querySelector('span').textContent.trim() : '';
+  sbInsert('engagement_poll_votes', { question_id: qid, answer: answerText });
+}
+
+// ── Supabase client ───────────────────────────────────────────────────────
+var SUPABASE_URL = 'https://ppemvydlcfbnunnydqef.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_x2bZVU4HFn5xh6nKii4nrA_WAL_k9NG';
+
+function sbInsert(table, payload) {
+  fetch(SUPABASE_URL + '/rest/v1/' + table, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify(payload)
+  }).catch(function(e) { console.warn('Supabase write failed:', e); });
 }
 
 // ── Q1 Other open response ─────────────────────────────────────────────────
@@ -2824,8 +2844,7 @@ function toggleOther() {
 function submitOther() {
   var val = document.getElementById('q4-other-input').value.trim();
   if (!val) return;
-  // TODO: write to Supabase engagement_responses table
-  // supabase.from('engagement_responses').insert({ question: 'q4_other', response: val, created_at: new Date() })
+  sbInsert('engagement_open_responses', { question_id: 'q4_other', response: val });
   document.getElementById('q4-other-input').disabled = true;
   document.getElementById('q4-other-input').style.opacity = '0.5';
   document.querySelector('[onclick="submitOther()"]').style.display = 'none';
@@ -2838,11 +2857,34 @@ function toggleReact(btn) {
   var siblings = btn.parentElement.querySelectorAll('.r-btn');
   var isActive = btn.classList.contains('active');
   siblings.forEach(b => b.classList.remove('active'));
-  if (!isActive) btn.classList.add('active');
+  if (!isActive) {
+    btn.classList.add('active');
+    // Write to Supabase — get card id from nearest ins-tag
+    var card = btn.closest('.ins-card');
+    var tag = card ? (card.querySelector('.ins-tag') || card.querySelector('.ins-hl')) : null;
+    var cardId = tag ? tag.textContent.trim().substring(0, 80) : 'unknown';
+    var reaction = btn.textContent.includes('Agree') ? 'agree' : 'disagree';
+    sbInsert('card_reactions', { card_id: cardId, reaction: reaction });
+  }
 }
 function toggleComment(btn) {
   btn.closest('.ins-card').querySelector('.ins-cmt').classList.toggle('open');
 }
+
+// Comment submit — delegated
+document.addEventListener('click', function(e) {
+  if (!e.target.classList.contains('cmt-sub')) return;
+  var cmt = e.target.closest('.ins-cmt');
+  var ta = cmt ? cmt.querySelector('.cmt-ta') : null;
+  if (!ta || !ta.value.trim()) return;
+  var card = e.target.closest('.ins-card');
+  var tag = card ? (card.querySelector('.ins-tag') || card.querySelector('.ins-hl')) : null;
+  var cardId = tag ? tag.textContent.trim().substring(0, 80) : 'unknown';
+  sbInsert('card_comments', { card_id: cardId, comment: ta.value.trim() });
+  ta.value = '';
+  ta.placeholder = 'Comment submitted — thank you!';
+  e.target.style.display = 'none';
+});
 
 // ── Modal ─────────────────────────────────────────────────────────────────
 function openModal() {
