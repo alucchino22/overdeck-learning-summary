@@ -2869,12 +2869,13 @@ function showPortfolioPage(pk) {
 // ── Poll voting ───────────────────────────────────────────────────────────
 var voted = {};
 function getOptText(el) {
-  // Get only the direct text node, not the nested p-pct span
+  // Clone the span, remove the p-pct child, get remaining text
   var span = el.querySelector('span');
   if (!span) return '';
-  var text = '';
-  span.childNodes.forEach(function(n) { if (n.nodeType === 3) text += n.textContent; });
-  return text.trim();
+  var clone = span.cloneNode(true);
+  var pct = clone.querySelector('.p-pct');
+  if (pct) pct.remove();
+  return clone.textContent.trim();
 }
 
 function vote(qid, el, base) {
