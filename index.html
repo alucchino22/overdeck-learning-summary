@@ -2794,9 +2794,18 @@ function showPortfolioPage(pk) {
 
 // ── Poll voting ───────────────────────────────────────────────────────────
 var voted = {};
+function getOptText(el) {
+  // Get only the direct text node, not the nested p-pct span
+  var span = el.querySelector('span');
+  if (!span) return '';
+  var text = '';
+  span.childNodes.forEach(function(n) { if (n.nodeType === 3) text += n.textContent; });
+  return text.trim();
+}
+
 function vote(qid, el, base) {
   if (voted[qid]) return; voted[qid] = true;
-  var answerText = el.querySelector('span') ? el.querySelector('span').textContent.trim() : '';
+  var answerText = getOptText(el);
   // Save to localStorage so vote persists on refresh
   try { localStorage.setItem('voted_' + qid, answerText); } catch(e) {}
   // Write to Supabase
@@ -2822,8 +2831,7 @@ function vote(qid, el, base) {
     var total = rows.length;
     var opts = document.getElementById(qid).querySelectorAll('.p-opt');
     opts.forEach(function(o) {
-      var span = o.querySelector('span');
-      var text = span ? span.textContent.replace(/\d+%$/, '').trim() : '';
+      var text = getOptText(o);
       var count = counts[text] || 0;
       var pct = total > 0 ? Math.round(count / total * 100) : 0;
       o.querySelector('.p-bar').style.width = pct + '%';
@@ -2862,8 +2870,7 @@ function restorePollState() {
         if (Array.isArray(rows)) rows.forEach(function(r) { counts[r.answer] = (counts[r.answer] || 0) + 1; });
         var total = Array.isArray(rows) ? rows.length : 1;
         opts.forEach(function(o) {
-          var span = o.querySelector('span');
-          var text = span ? span.textContent.replace(/\s*\d+%$/, '').trim() : '';
+          var text = getOptText(o);
           var count = counts[text] || 0;
           var pct = total > 0 ? Math.round(count / total * 100) : 0;
           o.querySelector('.p-bar').style.width = pct + '%';
