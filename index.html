@@ -340,6 +340,21 @@ function submitOther() {
 </script>
 </head>
 <body>
+<script>
+(function() {
+  var correct = 'overdeck2026';
+  var key = 'off_auth_2026';
+  if (sessionStorage.getItem(key) !== correct) {
+    var entered = prompt('Enter password to access the OFF Learning Summary:');
+    if (entered !== correct) {
+      document.body.innerHTML = '<div style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;color:#141857;font-size:16px;">Access denied. Please reload and enter the correct password.</div>';
+      throw new Error('Access denied');
+    }
+    sessionStorage.setItem(key, correct);
+  }
+})();
+</script>
+
 
 <nav class="nav">
   <div class="nav-logo">
