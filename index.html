@@ -2797,12 +2797,11 @@ var voted = {};
 function vote(qid, el, base) {
   if (voted[qid]) return; voted[qid] = true;
   var opts = document.getElementById(qid).querySelectorAll('.p-opt');
-  var counts = [], total = 0;
-  opts.forEach((o,i) => { var c=(o===el)?base:Math.floor(Math.random()*12)+3; counts.push(c); total+=c; });
-  opts.forEach((o,i) => {
-    var pct = Math.round(counts[i]/total*100);
-    o.querySelector('.p-bar').style.width = pct+'%';
-    o.querySelector('.p-pct').textContent = ' '+pct+'%';
+  // Show 100% on selected, 0% on others — real percentages will load from Supabase on next visit
+  opts.forEach(function(o) {
+    var isSelected = o === el;
+    o.querySelector('.p-bar').style.width = isSelected ? '100%' : '0%';
+    o.querySelector('.p-pct').textContent = isSelected ? ' 100%' : ' 0%';
     o.style.cursor = 'default';
   });
   el.classList.add('voted');
@@ -2870,8 +2869,40 @@ function toggleReact(btn) {
     var hl = card ? card.querySelector('.ins-hl') : null;
     var cardId = hl ? hl.textContent.trim().substring(0, 120) : 'unknown';
     var reaction = btn.textContent.trim().startsWith('👍') ? 'agree' : 'disagree';
+    // Optimistically increment count
+    var countEl = btn.querySelector('span');
+    if (countEl) countEl.textContent = parseInt(countEl.textContent || 0) + 1;
     sbInsert('card_reactions', { card_id: cardId, reaction: reaction });
   }
+}
+
+// Load reaction counts from Supabase on page load
+function loadReactionCounts() {
+  fetch(SUPABASE_URL + '/rest/v1/card_reactions?select=card_id,reaction', {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY
+    }
+  }).then(function(r) { return r.json(); })
+  .then(function(rows) {
+    if (!Array.isArray(rows)) return;
+    var counts = {};
+    rows.forEach(function(r) {
+      var key = r.card_id + '|' + r.reaction;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    document.querySelectorAll('.ins-card').forEach(function(card) {
+      var hl = card.querySelector('.ins-hl');
+      if (!hl) return;
+      var cardId = hl.textContent.trim().substring(0, 120);
+      var btns = card.querySelectorAll('.r-btn');
+      btns.forEach(function(btn) {
+        var reaction = btn.textContent.trim().startsWith('👍') ? 'agree' : 'disagree';
+        var countEl = btn.querySelector('span');
+        if (countEl) countEl.textContent = counts[cardId + '|' + reaction] || 0;
+      });
+    });
+  }).catch(function() {});
 }
 function toggleComment(btn) {
   btn.closest('.ins-card').querySelector('.ins-cmt').classList.toggle('open');
@@ -3009,6 +3040,7 @@ window.addEventListener('load', () => {
   if (orgFirst) orgFirst.click();
   var portFirst = document.querySelector('#portfolio-filters-top .s-filter');
   if (portFirst) portFirst.click();
+  loadReactionCounts();
 });
 </script>
 </body>
