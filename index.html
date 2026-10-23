@@ -3049,10 +3049,10 @@ function restorePollState() {
         if (saved) o.style.cursor = 'default';
         if (text === saved.trim()) o.classList.add('voted');
       });
-      // Mark leader
+      // Mark all leaders (including ties)
       var maxPct = Math.max.apply(null, opts.map(function(o) { return o._pctVal || 0; }));
       if (maxPct > 0) opts.forEach(function(o) {
-        if ((o._pctVal || 0) === maxPct) o.classList.add('leader');
+        if ((o._pctVal || 0) === maxPct && maxPct > 0) o.classList.add('leader');
         else o.classList.remove('leader');
       });
     });
