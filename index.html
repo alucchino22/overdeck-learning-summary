@@ -82,8 +82,9 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--surf); col
 .poll-opts { display: flex; flex-direction: column; gap: 4px; }
 .p-opt { font-size: 11.5px; color: var(--text2); background: var(--surf); border: 0.5px solid var(--bdr); border-radius: 5px; padding: 6px 10px; cursor: pointer; position: relative; overflow: hidden; transition: border-color 0.1s; }
 .p-opt:hover { border-color: #C7C7E0; }
-.p-opt.voted { border-color: var(--orange); background: #fdf2ec; color: var(--orange); font-weight: 500; }
-.p-bar { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(212,76,9,0.07); transition: width 0.4s ease; z-index: 0; }
+.p-opt.voted { border-color: var(--navy); background: #EEF1FA; color: var(--navy); font-weight: 500; }
+.p-bar { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(20,24,87,0.08); transition: width 0.4s ease; z-index: 0; }
+.p-opt.leader .p-bar { background: rgba(20,24,87,0.18); }
 .p-opt span { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; }
 .p-pct { font-size: 10.5px; color: var(--text3); margin-left: 8px; flex-shrink: 0; }
 .sidebar { display: flex; flex-direction: column; gap: 1rem; }
@@ -152,7 +153,7 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--surf); col
 .disc-poll { display: flex; flex-direction: column; gap: 6px; }
 .d-opt { font-size: 12.5px; color: var(--text2); background: var(--surf); border: 0.5px solid var(--bdr); border-radius: 6px; padding: 8px 12px; cursor: pointer; position: relative; overflow: hidden; transition: border-color 0.1s; }
 .d-opt:hover { border-color: #C7C7E0; }
-.d-opt.voted { border-color: var(--orange); background: #fdf2ec; color: var(--orange); font-weight: 500; }
+.d-opt.voted { border-color: var(--navy); background: #EEF1FA; color: var(--navy); font-weight: 500; }
 .d-bar { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(212,76,9,0.07); transition: width 0.4s ease; z-index: 0; }
 .d-opt span { position: relative; z-index: 1; display: flex; justify-content: space-between; }
 .d-pct { font-size: 11px; color: var(--text3); }
@@ -3042,10 +3043,17 @@ function restorePollState() {
           });
         }
         var pctVal = Math.round(count / total * 100);
+        o._pctVal = pctVal;
         o.querySelector('.p-bar').style.width = pctVal + '%';
         o.querySelector('.p-pct').textContent = ' ' + pctVal + '%';
         if (saved) o.style.cursor = 'default';
         if (text === saved.trim()) o.classList.add('voted');
+      });
+      // Mark leader
+      var maxPct = Math.max.apply(null, opts.map(function(o) { return o._pctVal || 0; }));
+      if (maxPct > 0) opts.forEach(function(o) {
+        if ((o._pctVal || 0) === maxPct) o.classList.add('leader');
+        else o.classList.remove('leader');
       });
     });
   }).catch(function(e) { console.error('restorePollState error:', e); });
