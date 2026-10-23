@@ -2808,6 +2808,13 @@ function checkGate() {
 </div>
 
 <script>
+// ── Clear stale localStorage poll keys (one-time migration) ──────────────
+try {
+  ['q4','q5','q6','q7'].forEach(function(q) {
+    localStorage.removeItem('voted_' + q);
+  });
+} catch(e) {}
+
 // ── Supabase credentials ──────────────────────────────────────────────────
 var SUPABASE_URL = 'https://ppemvydlcfbnunnydqef.supabase.co';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwZW12eWRsY2ZibnVubnlkcWVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MjUzMTQsImV4cCI6MjEwMDQwMTMxNH0.LHXw5KJfSDX-bQxmJy5WK3VLsKIg_lWyYkldvLXSviw';
