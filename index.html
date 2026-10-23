@@ -2956,8 +2956,8 @@ function getOptText(el) {
 function vote(qid, el, base) {
   if (voted[qid]) return; voted[qid] = true;
   var answerText = getOptText(el);
-  // Save to localStorage so vote persists on refresh
-  try { localStorage.setItem('voted_' + qid, answerText); } catch(e) {}
+  // Track vote in sessionStorage (clears when tab closes)
+  try { sessionStorage.setItem('voted_' + qid, answerText); } catch(e) {}
   // Write to Supabase
   sbInsert('engagement_poll_votes', { question_id: qid, answer: answerText });
   // Wait briefly for insert to complete before fetching counts
@@ -3015,7 +3015,7 @@ function restorePollState() {
       Object.keys(qCounts).forEach(function(k) { total += qCounts[k]; });
       if (total === 0) return;
       var saved = '';
-      try { saved = localStorage.getItem('voted_' + qid) || ''; } catch(e) {}
+      try { saved = sessionStorage.getItem('voted_' + qid) || ''; } catch(e) {}
       if (saved) voted[qid] = true;
       var opts = Array.from(container.querySelectorAll('.p-opt')).filter(function(o) {
         return !o.id || o.id !== qid + '-other-opt';
